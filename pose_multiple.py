@@ -78,11 +78,11 @@ def crop_person(image, results, width=model_width, height=model_height):
         """
         points=[7,11,23,25,31] #points of interest
         landmark_counter=0
-        while landmarks[landmark_counter].visibility > 0.9 and c < len(landmarks):
-            c+=1 #count up significant landmarks (above 0.9 visibility)
+        while landmarks[landmark_counter].visibility > 0.9 and landmark_counter < len(landmarks):
+            landmark_counter+=1 #count up significant landmarks (above 0.9 visibility)
         EndC=7
         for i in points: #loop through minimal point
-            if c<i:
+            if landmark_counter<i:
                 EndC=i
         #get first and last points
         x=int(width*landmarks[8].x)
