@@ -5,8 +5,8 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import cv2
 import numpy as np
-#from scipy.signal import convolve2d
 import time
+import copy
 
 #model_path = 'pose_landmarker_lite.task'
 #model_path = 'pose_landmarker_heavy.task'
@@ -14,6 +14,7 @@ model_path = 'pose_landmarker_full.task'
 min_detect_conf = 0.5
 min_prescence_conf = 0.5
 min_track_conf = 0.5
+max_people = 2
 
 model_width = 640
 model_height = 480
@@ -62,22 +63,37 @@ def draw_landmarks_on_image(rgb_image, detection_result):
       pose_landmarks_proto,
       solutions.pose.POSE_CONNECTIONS,
       solutions.drawing_styles.get_default_pose_landmarks_style())
-  return annotated_image
+  return annotated_image   
 
-"""
-kernel = np.add.outer(*2*(np.arange(3) % 2,))**2 / 8
-def perfect_edges(orig, n_iter=1, thresh=20):
-    mask = orig <= thresh
-    corrector = convolve2d(mask, kernel, 'same')
-    result = orig.copy()
-    result[mask] = 0
-    for j in range(n_iter):
-        result = result * corrector + convolve2d(result, kernel, 'same')
-        result[mask] = 0
-    result = np.round(result).astype(np.uint8)
-    result[mask] = orig[mask]
-    return result
-"""
+# Crop a person from a frame so that other people can be detected as well
+def crop_person(image, results, width=model_width, height=model_height):
+    try:
+        landmarks=results.pose_landmarks
+        """
+        7 - left ear
+        11 - left shoulder
+        23 - left hip
+        25 - left knee
+        31 - left foot index
+        """
+        points=[7,11,23,25,31] #points of interest
+        landmark_counter=0
+        while landmarks[landmark_counter].visibility > 0.9 and c < len(landmarks):
+            c+=1 #count up significant landmarks (above 0.9 visibility)
+        EndC=7
+        for i in points: #loop through minimal point
+            if c<i:
+                EndC=i
+        #get first and last points
+        x=int(width*landmarks[8].x)
+        y=int(height*landmarks[8].y)
+        ex=int(width*landmarks[EndC].x)
+        ey=int(height*landmarks[EndC].y)
+        image[max(y-130,0):min(height,ey+30),max(x-130,0):min(width,ex+30)]=(0,0,0)
+    except AttributeError:
+        print("no worky")
+        pass
+    return image
 
 base_options = python.BaseOptions(model_asset_path=model_path)
 options = vision.PoseLandmarkerOptions(
@@ -99,28 +115,36 @@ fps = video_capture.get(cv2.CAP_PROP_FPS)
 while True:
     # Load the input image.
     frame = get_image(video_capture)
-    timestamp += int(fps)
     image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
+    crop_image = copy.copy(frame)
+    annotated_image = copy.copy(frame)
+    overlaid_image = copy.copy(frame)
 
-    # Detect pose landmarks from the input image.
-    detection_result = detector.detect_for_video(image, timestamp)
+    people_left = True
+    people_detected = 0
+    while people_left and people_detected < max_people:
+        # Detect pose landmarks from the input image.
+        detection_result = detector.detect_for_video(image, timestamp)    
+        
+        if detection_result.pose_landmarks is not None:
+            # crop person
+            crop_image = crop_person(crop_image, detection_result)
 
-    # Process the detection result. In this case, visualize it.
-    annotated_image = draw_landmarks_on_image(image.numpy_view(), detection_result)
+            # add annotation
+            annotated_image = draw_landmarks_on_image(image.numpy_view(), detection_result)
+
+            # if segmentation mask returned, add overlay
+            if detection_result.segmentation_masks is not None:
+                segmentation_mask = detection_result.segmentation_masks[0].numpy_view()
+                condition = np.stack((segmentation_mask,) * 3, axis=-1) > 0.1
+                overlaid_image = overlay_image(image.numpy_view(), segmentation_mask)
+        else:
+            people_left = False
+        people_detected += 1
+        timestamp += int(fps)
     cv2.imshow('Annotated Frame', annotated_image)
-    if detection_result.segmentation_masks is not None:
-        segmentation_mask = detection_result.segmentation_masks[0].numpy_view()
-        #segmentation_mask = perfect_edges(segmentation_mask, smoothing_iter, smoothing_thresh)
-        #visualized_mask = np.repeat(segmentation_mask[:, :, np.newaxis], 3, axis=2) * 255
-        #cv2.imshow('Visualised Mask', visualized_mask)
-
-        #blurred_image = cv2.GaussianBlur(frame, (55,55), 0)
-        condition = np.stack((segmentation_mask,) * 3, axis=-1) > 0.1
-        #blurred_mask = np.where(condition, blurred_image, frame)
-        #cv2.imshow('Blurred Mask', blurred_mask)
-
-        overlaid_image = overlay_image(image.numpy_view(), segmentation_mask)
-        cv2.imshow('Pose Highlight', overlaid_image)
+    cv2.imshow('Pose Highlight', overlaid_image)
+    cv2.imshow('Crops', crop_image) #debugging only
 
     # if the 'q' key was pressed, break from the loop
     if cv2.waitKey(1) & 0xFF == ord("q"):
