@@ -1,0 +1,1 @@
+# https://developers.google.com/mediapipe/solutions/vision/face_detector
