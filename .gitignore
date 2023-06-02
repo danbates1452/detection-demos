@@ -156,3 +156,6 @@ cython_debug/
 *.task
 # YOLO Models
 *.pt
+
+# Images
+*.png
