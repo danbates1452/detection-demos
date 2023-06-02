@@ -7,5 +7,5 @@ Note: For Mediapipe demos, models will not self-install, see the relevant soluti
 Install Steps:
 1. Create Python3.8 Virtual Environment: ``python3.8 -m venv venv``
 2. Activate Virtual Environment: ``.\venv\Scripts\activate``
-3. Install Requirements: ``pip install -r .\requirements.txt``
-4. (Optional) Install Torch with Cuda: ``pip3 install torch --index-url https://download.pytorch.org/whl/cu117`` 
+3. Install Torch with Cuda: ``pip3.8 install torch --index-url https://download.pytorch.org/whl/cu117`` 
+4. Install All Other Requirements: ``pip3.8 install -r .\requirements.txt``
