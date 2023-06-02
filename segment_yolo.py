@@ -14,8 +14,7 @@ model = YOLO('yolov8n-seg.pt')
 #grab next frame from capture device
 def get_image(capture, width=model_width, height=model_height): 
     ret, frame = capture.read()
-    #image = cv2.resize(frame, (width, height))
-    image = frame
+    image = cv2.resize(frame, (width, height))
     if camera_flip_view:
        image = cv2.flip(image, 1)
     return image
