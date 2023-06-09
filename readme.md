@@ -9,3 +9,5 @@ Install Steps:
 2. Activate Virtual Environment: ``.\venv\Scripts\activate``
 3. Install Torch with Cuda: ``pip3.8 install torch --index-url https://download.pytorch.org/whl/cu117`` 
 4. Install All Other Requirements: ``pip3.8 install -r .\requirements.txt``
+
+Note: You may have to uninstall torch and reinstall it with cuda again with the command above as it doesn't always initially pull cuda with it.
