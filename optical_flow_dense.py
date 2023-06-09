@@ -3,11 +3,13 @@ import numpy as np
 import cv2 as cv
 cap = cv.VideoCapture(0)
 ret, frame1 = cap.read()
+frame1 = cv.flip(frame1, 1) #flip horizontally
 prvs = cv.cvtColor(frame1, cv.COLOR_BGR2GRAY)
 hsv = np.zeros_like(frame1)
 hsv[..., 1] = 255
 while(1):
     ret, frame2 = cap.read()
+    frame2 = cv.flip(frame2, 1) #flip horizontally
     if not ret:
         print('No frames grabbed!')
         break
