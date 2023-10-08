@@ -55,7 +55,7 @@ while True:
     result_cv = np.array(result.convert('RGB'), dtype=np.uint8)
     #result_cv = result_cv[:, :, ::-1].copy() #RGB to BGR
 
-    cv2.imshow("AnimeGANv2", result_cv)
+    cv2.imshow("AnimeGANv2: Primitive Style Transfer - Press Q to Quit, A and D to Switch Styles", result_cv)
 
     print((int) (1 // (time.time() - iter_start)), 'FPS', ', Model: ' + model_names[model_index], end='\r') #FPS counter with carriage return
     # if the 'q' key was pressed, break from the loop

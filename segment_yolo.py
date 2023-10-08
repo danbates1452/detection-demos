@@ -2,6 +2,7 @@ from ultralytics import YOLO
 import cv2
 import time
 import numpy as np
+import matplotlib.pyplot as plt
 
 model_width = 640
 model_height = 480
@@ -23,18 +24,18 @@ video_capture = cv2.VideoCapture(camera_index) #grab feed from first camera
 first_frame = get_image(video_capture) #initialise camera, ignore first frame
 time.sleep(camera_warmup) #allow camera warmup time
 timestamp = 0
+cv2.namedWindow("YOLOv8 Inference: Image Segmentation - Press Q to Quit", cv2.WINDOW_NORMAL)
 while True:
     # Load the input image.
     frame = get_image(video_capture)
     
     # Run YOLOv8 on it
     results = model(frame)
-
+    
+    plt.imshow(frame)
     annotated_frame = results[0].plot()
-
-    #cv2.imshow("Frame", frame)
-    cv2.namedWindow("Annotated Frame", cv2.WINDOW_NORMAL)
-    cv2.imshow("Annotated Frame", annotated_frame)
+    
+    cv2.imshow("YOLOv8 Inference: Image Segmentation - Press Q to Quit", annotated_frame)
     # if the 'q' key was pressed, break from the loop
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
